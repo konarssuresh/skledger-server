@@ -1,7 +1,8 @@
 const Category = require("../models/category");
 const defaultCategories = require("../config/defaultCategories");
+const { validateCreateCategoryReq } = require("../utils/validators");
 
-const createDefaultCategories = async (req, res) => {
+const createDefaultCategories = async (_, res) => {
   try {
     const existingCategories = await Category.find({ isDefault: true });
     if (existingCategories.length > 0) {
@@ -20,6 +21,28 @@ const createDefaultCategories = async (req, res) => {
   }
 };
 
+const createCategory = async (req, res) => {
+  try {
+    validateCreateCategoryReq(req);
+    const { name, emoji, type } = req.body;
+
+    const category = new Category({
+      name,
+      emoji,
+      type,
+      userId: req.user._id,
+    });
+
+    await category.save();
+    res
+      .status(201)
+      .json({ message: "Category created successfully", category });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createDefaultCategories,
+  createCategory,
 };

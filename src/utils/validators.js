@@ -53,7 +53,35 @@ const validateLoginReq = (req) => {
   return true;
 };
 
+const CATEGORY_ALLOWED_KEYS = ["name", "type", "emoji"];
+
+const validateCreateCategoryReq = (req) => {
+  if (!req.body || typeof req.body !== "object") {
+    throw new Error("Request body must be a valid JSON object");
+  }
+  const invalidKeys = Object.keys(req.body).filter(
+    (key) => !CATEGORY_ALLOWED_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { name, type } = req.body;
+
+  if (!name || validator.isEmpty(name.trim())) {
+    throw new Error("Category name is required");
+  }
+
+  if (!type || !["income", "expense", "savings"].includes(type)) {
+    throw new Error("Category type must be one of: income, expense, savings");
+  }
+
+  return true;
+};
+
 module.exports = {
   validateSignupReq,
   validateLoginReq,
+  validateCreateCategoryReq,
 };
