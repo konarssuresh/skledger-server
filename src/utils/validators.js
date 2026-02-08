@@ -107,9 +107,125 @@ const validateUpdateCategoryReq = (req) => {
   return true;
 };
 
+const TRANSACTION_CREATE_ALLOWED_KEYS = [
+  "name",
+  "amount",
+  "currency",
+  "categoryId",
+  "note",
+  "date",
+  "type",
+];
+
+const validateCreateTransactionReq = (req) => {
+  if (!req.body || typeof req.body !== "object") {
+    throw new Error("Request body must be a valid JSON object");
+  }
+
+  const invalidKeys = Object.keys(req.body).filter(
+    (key) => !TRANSACTION_CREATE_ALLOWED_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { name, amount, currency, categoryId, date, type } = req.body;
+
+  if (!name || validator.isEmpty(name.trim())) {
+    throw new Error("Transaction name is required");
+  }
+
+  if (amount === undefined || typeof amount !== "number" || amount < 0) {
+    throw new Error("Amount must be a positive number");
+  }
+
+  if (
+    !currency ||
+    !validator.isIn(currency, ["USD", "EUR", "GBP", "INR", "JPY", "CNY"])
+  ) {
+    throw new Error("Currency must be one of: USD, EUR, GBP, INR, JPY, CNY");
+  }
+
+  if (!categoryId || !validator.isMongoId(categoryId)) {
+    throw new Error("A valid categoryId is required");
+  }
+
+  if (date && !validator.isISO8601(date)) {
+    throw new Error("Date must be in ISO 8601 format");
+  }
+
+  if (!type || !["income", "expense", "savings"].includes(type)) {
+    throw new Error(
+      "Transaction type must be one of: income, expense, savings",
+    );
+  }
+
+  return true;
+};
+
+const UPDATE_ALLOWED_KEYS = [
+  "name",
+  "amount",
+  "currency",
+  "categoryId",
+  "note",
+  "date",
+  "type",
+];
+
+const validateUpdateTransactionReq = (req) => {
+  if (!req.body || typeof req.body !== "object") {
+    throw new Error("Request body must be a valid JSON object");
+  }
+
+  const invalidKeys = Object.keys(req.body).filter(
+    (key) => !UPDATE_ALLOWED_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { name, amount, currency, categoryId, date, type } = req.body;
+
+  if (name && validator.isEmpty(name.trim())) {
+    throw new Error("Transaction name cannot be empty");
+  }
+
+  if (amount !== undefined && (typeof amount !== "number" || amount < 0)) {
+    throw new Error("Amount must be a positive number");
+  }
+
+  if (
+    currency &&
+    !validator.isIn(currency, ["USD", "EUR", "GBP", "INR", "JPY", "CNY"])
+  ) {
+    throw new Error("Currency must be one of: USD, EUR, GBP, INR, JPY, CNY");
+  }
+
+  if (categoryId && !validator.isMongoId(categoryId)) {
+    throw new Error("A valid categoryId is required");
+  }
+
+  if (date && !validator.isISO8601(date)) {
+    throw new Error("Date must be in ISO 8601 format");
+  }
+
+  if (type && !["income", "expense", "savings"].includes(type)) {
+    throw new Error(
+      "Transaction type must be one of: income, expense, savings",
+    );
+  }
+
+  return true;
+};
+
 module.exports = {
   validateSignupReq,
   validateLoginReq,
   validateCreateCategoryReq,
   validateUpdateCategoryReq,
+  validateCreateTransactionReq,
+  validateUpdateTransactionReq,
 };
