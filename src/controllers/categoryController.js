@@ -1,6 +1,9 @@
 const Category = require("../models/category");
 const defaultCategories = require("../config/defaultCategories");
-const { validateCreateCategoryReq } = require("../utils/validators");
+const {
+  validateCreateCategoryReq,
+  validateUpdateCategoryReq,
+} = require("../utils/validators");
 
 const createDefaultCategories = async (_, res) => {
   try {
@@ -42,7 +45,74 @@ const createCategory = async (req, res) => {
   }
 };
 
+const updateCategory = async (req, res) => {
+  try {
+    validateUpdateCategoryReq(req);
+    const { id } = req.params;
+    const { name, emoji, type } = req.body;
+
+    const category = await Category.findOne({ _id: id, userId: req.user._id });
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    if (name) category.name = name;
+    if (emoji) category.emoji = emoji;
+    if (type) category.type = type;
+
+    await category.save();
+    res
+      .status(200)
+      .json({ message: "Category updated successfully", category });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getCategories = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const categories = await Category.find({
+      $or: [{ isDefault: true }, { userId: req.user._id }],
+    })
+      .sort({ type: 1, name: 1 })
+      .lean();
+
+    res.status(200).json({ categories });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const category = await Category.findOne({ _id: id, userId: req.user._id });
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    if (category.isDefault) {
+      return res
+        .status(400)
+        .json({ error: "Default categories cannot be deleted" });
+    }
+
+    await category.remove();
+    res.status(200).json({ message: "Category deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createDefaultCategories,
   createCategory,
+  updateCategory,
+  getCategories,
+  deleteCategory,
 };
