@@ -5,6 +5,7 @@ const connectDb = require("./config/connectDb");
 const cors = require("cors");
 const path = require("path");
 const authRouter = require("./routes/authRouter");
+const categoryRouter = require("./routes/categoryRouter");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRouter);
+app.use("/api/categories", categoryRouter);
 
 connectDb()
   .then(() => {
