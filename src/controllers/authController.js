@@ -56,7 +56,26 @@ const login = async (req, res) => {
   }
 };
 
+const getCurrentUser = async (req, res) => {
+  try {
+    const user = req.user;
+    res.status(200).json({
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        baseCurrency: user.baseCurrency,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch current user" });
+  }
+};
+
 module.exports = {
   signup,
   login,
+  getCurrentUser,
 };
