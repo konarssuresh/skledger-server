@@ -21,6 +21,11 @@ const signup = async (req, res) => {
   }
 };
 
+const signout = async (req, res) => {
+  res.cookie("token", null, { expires: new Date(Date.now()) });
+  res.json({ message: "Logout successful" });
+};
+
 const login = async (req, res) => {
   try {
     validateLoginReq(req);
@@ -65,6 +70,7 @@ const getCurrentUser = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         baseCurrency: user.baseCurrency,
+        theme: user.theme,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -74,8 +80,30 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const updatePreference = async (req, res) => {
+  try {
+    const user = req.user;
+    const existingUser = await User.findOne({ _id: user._id });
+
+    const { currency, theme } = req.body;
+    if (currency) {
+      existingUser.baseCurrency = currency;
+    }
+    if (theme) {
+      existingUser.theme = theme;
+    }
+    await existingUser.save();
+
+    res.status(200).json(existingUser);
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
+  signout,
   login,
   getCurrentUser,
+  updatePreference,
 };

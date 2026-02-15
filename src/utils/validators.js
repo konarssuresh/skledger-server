@@ -221,6 +221,33 @@ const validateUpdateTransactionReq = (req) => {
   return true;
 };
 
+const PREFERENCE_REQUEST_KEYS = ["currency", "theme"];
+
+const validatePreferenceRequest = () => {
+  const invalidKeys = Object.keys(req.body).filter(
+    (key) => !PREFERENCE_REQUEST_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { theme, currency } = req.body;
+
+  if (!["light", "dark"].includes(theme)) {
+    throw new Error("Invalid theme value -  supported values light/dark");
+  }
+
+  if (
+    currency &&
+    !validator.isIn(currency, ["USD", "EUR", "GBP", "INR", "JPY", "CNY"])
+  ) {
+    throw new Error("Currency must be one of: USD, EUR, GBP, INR, JPY, CNY");
+  }
+
+  return true;
+};
+
 module.exports = {
   validateSignupReq,
   validateLoginReq,
@@ -228,4 +255,5 @@ module.exports = {
   validateUpdateCategoryReq,
   validateCreateTransactionReq,
   validateUpdateTransactionReq,
+  validatePreferenceRequest,
 };

@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema(
       default: "INR",
       enum: ["USD", "EUR", "GBP", "INR", "JPY", "CNY"], // Add more currencies as needed
     },
+    theme: {
+      type: String,
+      default: "light",
+      enum: ["light", "dark"],
+    },
   },
   {
     timestamps: true,
