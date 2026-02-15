@@ -22,6 +22,18 @@ const signup = async (req, res) => {
 };
 
 const signout = async (req, res) => {
+  const isProd = process.env.NODE_ENV === "production";
+  const cookieOptions = {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+    secure: isProd, // true in prod (HTTPS), false locally (HTTP)
+    sameSite: isProd ? "none" : "lax", // cross-site cookies require none+secure
+    path: "/",
+  };
+
+  if (isProd && process.env.COOKIE_DOMAIN) {
+    cookieOptions.domain = process.env.COOKIE_DOMAIN; // e.g. ".example.com"
+  }
   res.cookie("token", null, { expires: new Date(Date.now()) });
   res.json({ message: "Logout successful" });
 };
