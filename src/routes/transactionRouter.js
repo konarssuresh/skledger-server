@@ -5,6 +5,7 @@ const {
   updateTransaction,
   deleteTransaction,
   getTransactions,
+  getMonthlyTransactionSummary,
   getTransactionById,
 } = require("../controllers/transactionController");
 
@@ -19,6 +20,11 @@ transactionRouter.patch("/:id", validateUser, updateTransaction);
 transactionRouter.delete("/:id", validateUser, deleteTransaction);
 
 transactionRouter.get("/", validateUser, getTransactions);
+transactionRouter.get(
+  "/month-summary",
+  validateUser,
+  getMonthlyTransactionSummary,
+);
 
 transactionRouter.get("/:id", validateUser, getTransactionById);
 
