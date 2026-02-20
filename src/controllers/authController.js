@@ -1,5 +1,10 @@
 const User = require("../models/user");
-const { validateSignupReq, validateLoginReq } = require("../utils/validators");
+const getGoogleClient = require("../google-client");
+const {
+  validateSignupReq,
+  validateLoginReq,
+  validateGoogleLogin,
+} = require("../utils/validators");
 
 const signup = async (req, res) => {
   try {
@@ -112,10 +117,54 @@ const updatePreference = async (req, res) => {
   }
 };
 
+const signinWithGoogle = async (req, res) => {
+  try {
+    validateGoogleLogin(req);
+    const { credential } = req.body;
+    const client = getGoogleClient();
+    if (!client) {
+      throw new Error("Google client is not configured");
+    }
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.OAUTH_CLIENT || process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { email } = payload;
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      throw new Error("User does not exist");
+    }
+
+    const token = user.generateAuthToken();
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      secure: isProd, // true in prod (HTTPS), false locally (HTTP)
+      sameSite: isProd ? "none" : "lax", // cross-site cookies require none+secure
+      path: "/",
+    };
+
+    if (isProd && process.env.COOKIE_DOMAIN) {
+      cookieOptions.domain = process.env.COOKIE_DOMAIN; // e.g. ".example.com"
+    }
+
+    res.cookie("token", token, cookieOptions);
+
+    res.send(payload);
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   signout,
   login,
   getCurrentUser,
   updatePreference,
+  signinWithGoogle,
 };

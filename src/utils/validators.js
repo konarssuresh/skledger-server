@@ -248,6 +248,22 @@ const validatePreferenceRequest = () => {
   return true;
 };
 
+const validateGoogleLogin = (req) => {
+  const ALLOWED_KEYS = ["credential"];
+  const invalidKeys = Object.keys(req.body || {}).filter(
+    (key) => !ALLOWED_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { credential } = req.body;
+  if (!credential) {
+    throw new Error("credential is required");
+  }
+};
+
 module.exports = {
   validateSignupReq,
   validateLoginReq,
@@ -256,4 +272,5 @@ module.exports = {
   validateCreateTransactionReq,
   validateUpdateTransactionReq,
   validatePreferenceRequest,
+  validateGoogleLogin,
 };
