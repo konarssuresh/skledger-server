@@ -6,6 +6,8 @@ const {
   getCurrentUser,
   updatePreference,
   signinWithGoogle,
+  updateProfile,
+  changePassword,
 } = require("../controllers/authController");
 const validateUser = require("../middlewares/validateUser");
 
@@ -17,5 +19,7 @@ authRouter.post("/login", login);
 authRouter.post("/login/google", signinWithGoogle);
 authRouter.get("/me", validateUser, getCurrentUser);
 authRouter.post("/changePreferences", validateUser, updatePreference);
+authRouter.patch("/profile", validateUser, updateProfile);
+authRouter.post("/change-password", validateUser, changePassword);
 
 module.exports = authRouter;

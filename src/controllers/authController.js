@@ -4,6 +4,8 @@ const {
   validateSignupReq,
   validateLoginReq,
   validateGoogleLogin,
+  validateUpdateProfileReq,
+  validateChangePasswordReq,
 } = require("../utils/validators");
 
 const signup = async (req, res) => {
@@ -160,6 +162,87 @@ const signinWithGoogle = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    validateUpdateProfileReq(req);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { fullName, email } = req.body;
+    let emailUpdated = false;
+
+    if (fullName !== undefined) {
+      user.fullName = String(fullName).trim();
+    }
+
+    if (email !== undefined) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      if (normalizedEmail !== user.email) {
+        const existingUser = await User.findOne({
+          email: normalizedEmail,
+          _id: { $ne: user._id },
+        });
+        if (existingUser) {
+          throw new Error("Email is already registered");
+        }
+        user.email = normalizedEmail;
+        user.verified = false;
+        emailUpdated = true;
+      }
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      emailVerificationRequired: emailUpdated,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        verified: user.verified,
+        baseCurrency: user.baseCurrency,
+        theme: user.theme,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    return res.status(400).send({ error: error.message });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    validateChangePasswordReq(req);
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+    if (!isCurrentPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const isSameAsCurrent = await user.comparePassword(newPassword);
+    if (isSameAsCurrent) {
+      throw new Error("New password must be different from current password");
+    }
+
+    user.password = newPassword;
+    await user.hashPassword();
+    await user.save();
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    return res.status(400).send({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   signout,
@@ -167,4 +250,6 @@ module.exports = {
   getCurrentUser,
   updatePreference,
   signinWithGoogle,
+  updateProfile,
+  changePassword,
 };

@@ -53,6 +53,77 @@ const validateLoginReq = (req) => {
   return true;
 };
 
+const UPDATE_PROFILE_ALLOWED_KEYS = ["fullName", "email"];
+
+const validateUpdateProfileReq = (req) => {
+  if (!req.body || typeof req.body !== "object") {
+    throw new Error("Request body must be a valid JSON object");
+  }
+
+  const invalidKeys = Object.keys(req.body).filter(
+    (key) => !UPDATE_PROFILE_ALLOWED_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { fullName, email } = req.body;
+
+  if (fullName === undefined && email === undefined) {
+    throw new Error("At least one field is required: fullName or email");
+  }
+
+  if (fullName !== undefined && validator.isEmpty(String(fullName).trim())) {
+    throw new Error("Full name cannot be empty");
+  }
+
+  if (email !== undefined && !validator.isEmail(String(email))) {
+    throw new Error("A valid email is required");
+  }
+
+  return true;
+};
+
+const CHANGE_PASSWORD_ALLOWED_KEYS = ["currentPassword", "newPassword"];
+
+const validateChangePasswordReq = (req) => {
+  if (!req.body || typeof req.body !== "object") {
+    throw new Error("Request body must be a valid JSON object");
+  }
+
+  const invalidKeys = Object.keys(req.body).filter(
+    (key) => !CHANGE_PASSWORD_ALLOWED_KEYS.includes(key),
+  );
+
+  if (invalidKeys.length > 0) {
+    throw new Error(`Invalid fields in request: ${invalidKeys.join(", ")}`);
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || validator.isEmpty(String(currentPassword))) {
+    throw new Error("currentPassword is required");
+  }
+
+  if (
+    !newPassword ||
+    !validator.isStrongPassword(String(newPassword), {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+  ) {
+    throw new Error(
+      "newPassword must be at least 8 characters long and include uppercase, lowercase, number, and symbol",
+    );
+  }
+
+  return true;
+};
+
 const CATEGORY_ALLOWED_KEYS = ["name", "type", "emoji"];
 
 const validateCreateCategoryReq = (req) => {
@@ -267,6 +338,8 @@ const validateGoogleLogin = (req) => {
 module.exports = {
   validateSignupReq,
   validateLoginReq,
+  validateUpdateProfileReq,
+  validateChangePasswordReq,
   validateCreateCategoryReq,
   validateUpdateCategoryReq,
   validateCreateTransactionReq,
