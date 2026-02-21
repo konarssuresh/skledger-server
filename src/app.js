@@ -7,6 +7,7 @@ const path = require("path");
 const authRouter = require("./routes/authRouter");
 const categoryRouter = require("./routes/categoryRouter");
 const transactionRouter = require("./routes/transactionRouter");
+const analyticsRouter = require("./routes/analyticsRouter");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/transactions", transactionRouter);
+app.use("/api/analytics", analyticsRouter);
 
 connectDb()
   .then(() => {
