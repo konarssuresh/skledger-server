@@ -1,0 +1,539 @@
+openapi: 3.0.3
+info:
+  title: SKLedger API
+  version: 1.0.0
+  description: Expense tracker backend APIs for auth, categories, transactions, and analytics.
+servers:
+  - url: http://localhost:8000
+    description: Local
+tags:
+  - name: Auth
+  - name: Categories
+  - name: Transactions
+  - name: Analytics
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        baseCurrency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CNY]
+        theme:
+          type: string
+          enum: [light, dark]
+        verified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AuthSignupRequest:
+      type: object
+      required: [fullName, email, password]
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        baseCurrency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CNY]
+    AuthLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    GoogleLoginRequest:
+      type: object
+      required: [credential]
+      properties:
+        credential:
+          type: string
+    ChangePreferencesRequest:
+      type: object
+      properties:
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CNY]
+        theme:
+          type: string
+          enum: [light, dark]
+    UpdateProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+    Category:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense, savings]
+        emoji:
+          type: string
+        isDefault:
+          type: boolean
+        userId:
+          type: string
+    CreateCategoryRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense, savings]
+        emoji:
+          type: string
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense, savings]
+        emoji:
+          type: string
+    Transaction:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CNY]
+        categoryId:
+          type: string
+        note:
+          type: string
+        date:
+          type: string
+          format: date-time
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [income, expense, savings]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateTransactionRequest:
+      type: object
+      required: [name, amount, currency, categoryId, date, type]
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CNY]
+        categoryId:
+          type: string
+        note:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+          enum: [income, expense, savings]
+    UpdateTransactionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CNY]
+        categoryId:
+          type: string
+        note:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+          enum: [income, expense, savings]
+security:
+  - cookieAuth: []
+paths:
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthSignupRequest'
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email/password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        '200':
+          description: Login successful (sets auth cookie)
+        '400':
+          description: Invalid credentials
+  /api/auth/login/google:
+    post:
+      tags: [Auth]
+      summary: Login with Google credential token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleLoginRequest'
+      responses:
+        '200':
+          description: Login successful (sets auth cookie)
+        '400':
+          description: Google login failure
+  /api/auth/signout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      responses:
+        '200':
+          description: Logout successful
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+  /api/auth/changePreferences:
+    post:
+      tags: [Auth]
+      summary: Update user preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated
+        '400':
+          description: Validation error
+  /api/auth/profile:
+    patch:
+      tags: [Auth]
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+        '400':
+          description: Validation error
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Validation error
+  /api/categories:
+    get:
+      tags: [Categories]
+      summary: Fetch user categories
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+  /api/categories/create:
+    post:
+      tags: [Categories]
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created
+  /api/categories/{id}:
+    patch:
+      tags: [Categories]
+      summary: Update category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category deleted
+  /api/categories/create-default:
+    post:
+      tags: [Categories]
+      summary: Create default categories (internal)
+      security: []
+      responses:
+        '200':
+          description: Default categories created
+  /api/transactions:
+    get:
+      tags: [Transactions]
+      summary: Fetch transactions (optionally by date)
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: Optional YYYY-MM-DD filter.
+      responses:
+        '200':
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+  /api/transactions/create:
+    post:
+      tags: [Transactions]
+      summary: Create transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+      responses:
+        '201':
+          description: Transaction created
+  /api/transactions/{id}:
+    get:
+      tags: [Transactions]
+      summary: Get transaction by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction detail
+    patch:
+      tags: [Transactions]
+      summary: Update transaction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTransactionRequest'
+      responses:
+        '200':
+          description: Transaction updated
+    delete:
+      tags: [Transactions]
+      summary: Delete transaction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction deleted
+  /api/transactions/month-summary:
+    get:
+      tags: [Transactions]
+      summary: Month summary grouped by day
+      parameters:
+        - in: query
+          name: year
+          schema:
+            type: integer
+        - in: query
+          name: month
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Month summary (or transactions fallback if params omitted)
+  /api/analytics/dashboard:
+    get:
+      tags: [Analytics]
+      summary: Dashboard analytics
+      parameters:
+        - in: query
+          name: periodType
+          required: false
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+        - in: query
+          name: date
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Dashboard analytics payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                  categorySummary:
+                    type: array
+                    items:
+                      type: object
+                  trendSummary:
+                    type: array
+                    items:
+                      type: object
+                  insights:
+                    type: object
+                  recentTransactions:
+                    type: array
+                    items:
+                      type: object

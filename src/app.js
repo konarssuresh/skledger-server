@@ -4,6 +4,9 @@ const cookieParser = require("cookie-parser");
 const connectDb = require("./config/connectDb");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
+const yaml = require("js-yaml");
+const swaggerUi = require("swagger-ui-express");
 const authRouter = require("./routes/authRouter");
 const categoryRouter = require("./routes/categoryRouter");
 const transactionRouter = require("./routes/transactionRouter");
@@ -32,6 +35,10 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+
+const openApiFilePath = path.resolve(__dirname, "./docs/openapi.yaml");
+const openApiDocument = yaml.load(fs.readFileSync(openApiFilePath, "utf8"));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 app.use("/api/auth", authRouter);
 app.use("/api/categories", categoryRouter);
