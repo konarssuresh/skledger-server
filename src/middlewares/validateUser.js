@@ -4,7 +4,9 @@ const User = require("../models/user");
 const validateUser = async (req, res, next) => {
   try {
     const token = req.cookies.token;
+    console.log("token", token);
     if (!token) {
+      console.log("no token provided");
       return res.status(401).json({ error: "Unauthorized: No token provided" });
     }
 
